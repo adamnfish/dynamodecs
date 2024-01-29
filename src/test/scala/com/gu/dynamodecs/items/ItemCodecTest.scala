@@ -1,21 +1,23 @@
-package com.gu;
+package com.gu.dynamodecs.items
 
-import com.gu.dynamodecs.{ItemCodec, UnwrappedAttributeCodec}
+import com.gu.dynamodecs.attributes.UnwrappedAttributeCodec
+import com.gu.dynamodecs.items.ItemCodec
+import io.circe.*
+import io.circe.generic.semiauto.*
+import org.scalatest.EitherValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import io.circe._
-import io.circe.generic.semiauto._
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 
-class ItemCodecTest extends AnyFreeSpec with Matchers {
+class ItemCodecTest extends AnyFreeSpec with Matchers with EitherValues {
   "round-trips" - {
     "a simple codec works" in {
       case class Foo(a: String, b: Boolean, c: Int) derives ItemCodec
 
       val foo = Foo("hello", true, 42)
       val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
-      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo)
+      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
       decodedFoo shouldEqual foo
     }
@@ -25,7 +27,7 @@ class ItemCodecTest extends AnyFreeSpec with Matchers {
 
       val foo = Foo("hello", List(42, 7))
       val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
-      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo)
+      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
       decodedFoo shouldEqual foo
     }
@@ -36,7 +38,7 @@ class ItemCodecTest extends AnyFreeSpec with Matchers {
 
         val foo = Foo("hello", Some(42))
         val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
-        val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo)
+        val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
         decodedFoo shouldEqual foo
       }
@@ -46,7 +48,7 @@ class ItemCodecTest extends AnyFreeSpec with Matchers {
 
         val foo = Foo("hello", None)
         val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
-        val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo)
+        val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
         decodedFoo shouldEqual foo
       }
@@ -58,7 +60,7 @@ class ItemCodecTest extends AnyFreeSpec with Matchers {
 
         val foo = Foo("hello", Map("a" -> 1, "b" -> 2))
         val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
-        val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo)
+        val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
         decodedFoo shouldEqual foo
       }
@@ -68,7 +70,7 @@ class ItemCodecTest extends AnyFreeSpec with Matchers {
 
         val foo = Foo("hello", Map(1 -> 1, 2 -> 2))
         val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
-        val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo)
+        val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
         decodedFoo shouldEqual foo
       }
@@ -81,7 +83,7 @@ class ItemCodecTest extends AnyFreeSpec with Matchers {
 
       val foo = Foo(42, Bar("hello"))
       val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
-      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo)
+      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
       decodedFoo shouldEqual foo
     }
@@ -95,7 +97,7 @@ class ItemCodecTest extends AnyFreeSpec with Matchers {
 
       val foo = Foo(42, Bar("hello", Baz(true)))
       val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
-      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo)
+      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
       decodedFoo shouldEqual foo
     }
@@ -107,7 +109,7 @@ class ItemCodecTest extends AnyFreeSpec with Matchers {
 
       val foo = Foo(42, Bar("hello"))
       val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
-      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo)
+      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
       decodedFoo shouldEqual foo
     }
@@ -153,7 +155,7 @@ class ItemCodecTest extends AnyFreeSpec with Matchers {
     case class Bar(a: Int)
     val bar = Bar(42)
     val barItemCodec = summon[ItemCodec[Bar]]
-    barItemCodec.decode(barItemCodec.encode(bar)) shouldEqual bar
+    barItemCodec.decode(barItemCodec.encode(bar)) shouldEqual Right(bar)
   }
 
   "Can manually create a codec" ignore {
@@ -169,14 +171,14 @@ class ItemCodecTest extends AnyFreeSpec with Matchers {
 
   "syntax" - {
     "asDbItem works the same way as manually encoding" in {
-      import com.gu.dynamodecs.ItemCodec.asDbItem
+      import com.gu.dynamodecs.items.ItemCodec.asDbItem
       case class Foo(s: String, n: Int)
       val foo = Foo("hello", 42)
       foo.asDbItem shouldEqual summon[ItemCodec[Foo]].encode(foo)
     }
 
     "fromDbItem works the same way as manually decoding" in {
-      import com.gu.dynamodecs.ItemCodec.fromDbItem
+      import com.gu.dynamodecs.items.ItemCodec.fromDbItem
       case class Foo(s: String, n: Int)
       val foo = Foo("hello", 42)
       val encodedItem = summon[ItemCodec[Foo]].encode(foo)

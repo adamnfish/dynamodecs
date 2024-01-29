@@ -1,14 +1,19 @@
-package com.gu.dynamodecs
+package com.gu.dynamodecs.items
 
+import com.gu.dynamodecs.DynamodecResult
+import com.gu.dynamodecs.attributes.AttributeCodec
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 import scala.compiletime.{constValue, erasedValue, summonInline}
 import scala.deriving.Mirror
 
+import cats.*
+import cats.implicits.*
+
 
 trait ItemCodec[A]:
   def encode(a: A): Map[String, AttributeValue]
-  def decode(item: Map[String, AttributeValue]): A
+  def decode(item: Map[String, AttributeValue]): DynamodecResult[A]
 
 object ItemCodec:
   def apply[A : ItemCodec]: ItemCodec[A] =
@@ -19,7 +24,7 @@ object ItemCodec:
       summon[ItemCodec[A]].encode(a)
 
   extension (item: Map[String, AttributeValue])
-    def fromDbItem[A : ItemCodec]: A =
+    def fromDbItem[A : ItemCodec]: DynamodecResult[A] =
       summon[ItemCodec[A]].decode(item)
 
   extension [A](avc: ItemCodec[A])
@@ -27,15 +32,15 @@ object ItemCodec:
       new ItemCodec[B]:
         override def encode(b: B): Map[String, AttributeValue] =
           avc.encode(g(b))
-        override def decode(av: Map[String, AttributeValue]): B =
-          f(avc.decode(av))
+        override def decode(av: Map[String, AttributeValue]): DynamodecResult[B] =
+          avc.decode(av).map(f)
 
   def instance[A](encodeItem: A => Map[String, AttributeValue])(decodeItem: Map[String, AttributeValue] => A): ItemCodec[A] =
     new ItemCodec[A]:
       override def encode(a: A): Map[String, AttributeValue] =
         encodeItem(a)
-      override def decode(item: Map[String, AttributeValue]): A =
-        decodeItem(item)
+      override def decode(item: Map[String, AttributeValue]): DynamodecResult[A] =
+        Right(decodeItem(item))
 
   inline given derived[A <: Product](using m: Mirror.ProductOf[A]): ItemCodec[A] =
     val labelsAndCodecs = getLabelsAndCodecs[m.MirroredElemLabels, m.MirroredElemTypes]
@@ -48,12 +53,12 @@ object ItemCodec:
           }
           .toMap
 
-      override def decode(map: Map[String, AttributeValue]): A =
+      override def decode(map: Map[String, AttributeValue]): DynamodecResult[A] =
         val values = labelsAndCodecs
-          .map { (label, codec) =>
+          .traverse { (label, codec) =>
             codec.decode(map(label))
           }
-        m.fromProduct(Tuple.fromArray(values.toArray))
+        values.map(aa => m.fromProduct(Tuple.fromArray(aa.toArray)))
 
   private inline def getLabelsAndCodecs[L <: Tuple, T <: Tuple]: List[(String, AttributeCodec[Any])] =
     inline (erasedValue[L], erasedValue[T]) match
