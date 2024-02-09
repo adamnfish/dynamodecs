@@ -1,6 +1,6 @@
 package com.gu.dynamodecs.items
 
-import com.gu.dynamodecs.attributes.UnwrappedAttributeCodec
+import com.gu.dynamodecs.attributes.{MapKeyCodec, UnwrappedAttributeCodec}
 import com.gu.dynamodecs.items.ItemCodec
 import io.circe.*
 import io.circe.generic.semiauto.*
@@ -12,29 +12,44 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 class ItemCodecTest extends AnyFreeSpec with Matchers with EitherValues {
   "round-trips" - {
-    "a simple codec works" in {
-      case class Foo(a: String, b: Boolean, c: Int) derives ItemCodec
+    "a simple codec" - {
+      "can round trip a valid datastructure" in {
+        case class Foo(a: String, b: Boolean, c: Int) derives ItemCodec
 
-      val foo = Foo("hello", true, 42)
-      val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
-      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
+        val foo = Foo("hello", true, 42)
+        val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
+        val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
-      decodedFoo shouldEqual foo
+        decodedFoo shouldEqual foo
+      }
+      
+      "fails to deocde data that does not match the expected type" in {
+        case class Foo(a: String, b: Boolean, c: Int) derives ItemCodec
+
+        val encodedFoo = Map(
+          "a" -> AttributeValue.builder().s("hello").build(),
+          "b" -> AttributeValue.builder().s("not a boolean").build(),
+          "c" -> AttributeValue.builder().s("not an int").build()
+        )
+        summon[ItemCodec[Foo]].decode(encodedFoo).isLeft shouldBe true
+      }
     }
 
-    "a codec with a collection works" in {
-      case class Foo(a: String, ns: List[Int]) derives ItemCodec
+    "a codec with a collection" - {
+      "can round trip a valid datastructure" in {
+        case class Foo(a: String, ns: List[Int]) derives ItemCodec
 
-      val foo = Foo("hello", List(42, 7))
-      val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
-      val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
+        val foo = Foo("hello", List(42, 7))
+        val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
+        val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
-      decodedFoo shouldEqual foo
+        decodedFoo shouldEqual foo
+      }
     }
 
     "a datastructure with an optional value" - {
       "works when it is present" in {
-        case class Foo(a: String, maybeB: Option[Int]) derives ItemCodec
+        case class Foo(a: String, maybeInt: Option[Int]) derives ItemCodec
 
         val foo = Foo("hello", Some(42))
         val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
@@ -44,13 +59,23 @@ class ItemCodecTest extends AnyFreeSpec with Matchers with EitherValues {
       }
 
       "works when it is absent" in {
-        case class Foo(a: String, maybeB: Option[Int]) derives ItemCodec
+        case class Foo(a: String, maybeInt: Option[Int]) derives ItemCodec
 
         val foo = Foo("hello", None)
         val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
         val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
         decodedFoo shouldEqual foo
+      }
+
+      "cannot decode an optional value containing the wrong type" in {
+        case class Foo(str: String, maybeInt: Option[Int]) derives ItemCodec
+
+        val encodedFoo = Map(
+          "str" -> AttributeValue.builder().s("hello").build(),
+          "maybeInt" -> AttributeValue.builder().s("not an int").build()
+        )
+        summon[ItemCodec[Foo]].decode(encodedFoo).isLeft shouldBe true
       }
     }
 
@@ -65,7 +90,7 @@ class ItemCodecTest extends AnyFreeSpec with Matchers with EitherValues {
         decodedFoo shouldEqual foo
       }
 
-      "works with non-string keys that have a MapKeyCodec instance" in {
+      "works with non-string keys that have a provided MapKeyCodec instance" in {
         case class Foo(a: String, map: Map[Int, Int]) derives ItemCodec
 
         val foo = Foo("hello", Map(1 -> 1, 2 -> 2))
@@ -73,6 +98,25 @@ class ItemCodecTest extends AnyFreeSpec with Matchers with EitherValues {
         val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo).value
 
         decodedFoo shouldEqual foo
+      }
+
+      "works with non-primitive where a MapKeyCodec instance is provided" in {
+        case class KeyType(key: String)
+        given MapKeyCodec[KeyType] = MapKeyCodec.instance(KeyType.apply)(_.key)
+        case class Foo(a: String, map: Map[KeyType, Int]) derives ItemCodec
+
+        val foo = Foo("hello", Map(KeyType("test") -> 1, KeyType("test2") -> 2))
+        val encodedFoo = summon[ItemCodec[Foo]].encode(foo)
+        val decodedFoo = summon[ItemCodec[Foo]].decode(encodedFoo)
+
+        decodedFoo.value shouldEqual foo
+      }
+
+      "does not work with non-string keys that do not have a MapKeyCodec instance" in {
+        case class KeyType(key: String)
+        case class Foo(a: String, map: Map[KeyType, Int])
+
+        "summon[ItemCodec[Foo]]" shouldNot compile
       }
     }
 

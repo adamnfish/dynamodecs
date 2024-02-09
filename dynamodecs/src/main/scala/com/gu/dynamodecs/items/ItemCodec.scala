@@ -7,8 +7,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 import scala.compiletime.{constValue, erasedValue, summonInline}
 import scala.deriving.Mirror
 
-import cats.*
-import cats.implicits.*
+import com.gu.dynamodecs.Utils.traverseE
 
 
 trait ItemCodec[A]:
@@ -19,6 +18,8 @@ object ItemCodec:
   def apply[A : ItemCodec]: ItemCodec[A] =
     summon[ItemCodec[A]]
 
+  // usage helpers
+
   extension [A : ItemCodec](a: A)
     def asDbItem: Map[String, AttributeValue] =
       summon[ItemCodec[A]].encode(a)
@@ -26,6 +27,15 @@ object ItemCodec:
   extension (item: Map[String, AttributeValue])
     def fromDbItem[A : ItemCodec]: DynamodecResult[A] =
       summon[ItemCodec[A]].decode(item)
+
+  // creating instances
+
+  def instance[A](encodeItem: A => Map[String, AttributeValue])(decodeItem: Map[String, AttributeValue] => DynamodecResult[A]): ItemCodec[A] =
+    new ItemCodec[A]:
+      override def encode(a: A): Map[String, AttributeValue] =
+        encodeItem(a)
+      override def decode(item: Map[String, AttributeValue]): DynamodecResult[A] =
+        decodeItem(item)
 
   extension [A](avc: ItemCodec[A])
     def imap[B](f: A => B)(g: B => A): ItemCodec[B] =
@@ -35,12 +45,14 @@ object ItemCodec:
         override def decode(av: Map[String, AttributeValue]): DynamodecResult[B] =
           avc.decode(av).map(f)
 
-  def instance[A](encodeItem: A => Map[String, AttributeValue])(decodeItem: Map[String, AttributeValue] => A): ItemCodec[A] =
-    new ItemCodec[A]:
-      override def encode(a: A): Map[String, AttributeValue] =
-        encodeItem(a)
-      override def decode(item: Map[String, AttributeValue]): DynamodecResult[A] =
-        Right(decodeItem(item))
+    def iemap[B](f: A => DynamodecResult[B])(g: B => A): ItemCodec[B] =
+      new ItemCodec[B]:
+        override def encode(b: B): Map[String, AttributeValue] =
+          avc.encode(g(b))
+        override def decode(av: Map[String, AttributeValue]): DynamodecResult[B] =
+          avc.decode(av).flatMap(f)
+
+  // instance derivation
 
   inline given derived[A <: Product](using m: Mirror.ProductOf[A]): ItemCodec[A] =
     val labelsAndCodecs = getLabelsAndCodecs[m.MirroredElemLabels, m.MirroredElemTypes]
@@ -55,7 +67,7 @@ object ItemCodec:
 
       override def decode(map: Map[String, AttributeValue]): DynamodecResult[A] =
         val values = labelsAndCodecs
-          .traverse { (label, codec) =>
+          .traverseE { (label, codec) =>
             codec.decode(map(label))
           }
         values.map(aa => m.fromProduct(Tuple.fromArray(aa.toArray)))

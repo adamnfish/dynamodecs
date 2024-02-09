@@ -11,7 +11,13 @@ ThisBuild / scalacOptions ++= Seq(
   "-deprecation",
 )
 
-lazy val dynamodecs = (project in file("."))
+lazy val root = (project in file("."))
+  .settings(
+    name := "dynamodecs-root",
+  )
+  .aggregate(dynamodecs, integrationTest)
+
+lazy val dynamodecs = (project in file("dynamodecs"))
   .settings(
     name := "dynamodecs",
     libraryDependencies ++= Seq(
@@ -20,3 +26,14 @@ lazy val dynamodecs = (project in file("."))
       circeGeneric % Test,
     ) ++ circe,
   )
+
+lazy val integrationTest = (project in file("integration-tests"))
+  .settings(
+    name := "dynamodecs-integration-tests",
+    libraryDependencies ++= Seq(
+      scalatest % Test,
+      dynamoDb,
+      circeGeneric,
+    ) ++ circe,
+  )
+  .dependsOn(dynamodecs)
