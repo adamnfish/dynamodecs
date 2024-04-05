@@ -1,3 +1,6 @@
 /.bsp/
 target/
 .idea/
+
+dynamodb-local-metadata.json
+dynamodb-local/

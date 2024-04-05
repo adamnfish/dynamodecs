@@ -194,5 +194,63 @@ class AttributeCodecTest extends AnyFreeSpec with Matchers {
       }
     }
 
+    "int List codec" - {
+      "can roundtrip data" in {
+        val codec = summon[AttributeCodec[List[Int]]]
+        val input = List(1, 2, 3)
+        val encoded = codec.encode(input)
+        val decoded = codec.decode(encoded)
+        decoded shouldEqual Right(input)
+      }
+
+      "fails if given data of the wrong type" - {
+        "given a string when expecting a list of ints" in {
+          val data = AttributeValue.builder().s("1").build()
+          val codec = summon[AttributeCodec[List[Int]]]
+          val decoded = codec.decode(data)
+          decoded.isLeft shouldEqual true
+        }
+
+        "given a boolean when expecting a list of ints" in {
+          val data = AttributeValue.builder().bool(true).build()
+          val codec = summon[AttributeCodec[List[Int]]]
+          val decoded = codec.decode(data)
+          decoded.isLeft shouldEqual true
+        }
+
+        "given a single int when expecting a list of ints" in {
+          val data = AttributeValue.builder().n("1").build()
+          val codec = summon[AttributeCodec[List[Int]]]
+          val decoded = codec.decode(data)
+          decoded.isLeft shouldEqual true
+        }
+      }
+    }
+
+    "generic List codec" - {
+      "can roundtrip data" in {
+        val codec = summon[AttributeCodec[List[Int]]]
+        val input = List(1, 2, 3)
+        val encoded = codec.encode(input)
+        val decoded = codec.decode(encoded)
+        decoded shouldEqual Right(input)
+      }
+
+      "fails if given data of the wrong type" - {
+        "given a single int when expecting a list of ints" in {
+          val data = AttributeValue.builder().n("1").build()
+          val codec = summon[AttributeCodec[List[Int]]]
+          val decoded = codec.decode(data)
+          decoded.isLeft shouldEqual true
+        }
+
+        "given a string when expecting a list of ints" in {
+          val data = AttributeValue.builder().s("1").build()
+          val codec = summon[AttributeCodec[List[Int]]]
+          val decoded = codec.decode(data)
+          decoded.isLeft shouldEqual true
+        }
+      }
+    }
   }
 }

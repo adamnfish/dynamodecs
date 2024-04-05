@@ -6,6 +6,8 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 import scala.compiletime.{constValue, erasedValue, summonInline}
 import scala.deriving.Mirror
+import scala.jdk.CollectionConverters.*
+
 
 import com.gu.dynamodecs.Utils.traverseE
 
@@ -23,10 +25,15 @@ object ItemCodec:
   extension [A : ItemCodec](a: A)
     def asDbItem: Map[String, AttributeValue] =
       summon[ItemCodec[A]].encode(a)
+    def asJavaDbItem: java.util.Map[String, AttributeValue] =
+      summon[ItemCodec[A]].encode(a).asJava
 
   extension (item: Map[String, AttributeValue])
     def fromDbItem[A : ItemCodec]: DynamodecResult[A] =
       summon[ItemCodec[A]].decode(item)
+  extension (item: java.util.Map[String, AttributeValue])
+    def fromJavaDbItem[A : ItemCodec]: DynamodecResult[A] =
+      summon[ItemCodec[A]].decode(item.asScala.toMap)
 
   // creating instances
 
