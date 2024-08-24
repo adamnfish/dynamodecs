@@ -15,11 +15,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'sbt'
+
+      - name: Cache DynamoDB local
+        id: cache-dynamodb
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/work/dynamodecs/dynamodecs/dynamodb-local/
+          key: dynamodb-local
+
       - name: Run tests
         run: sbt test
