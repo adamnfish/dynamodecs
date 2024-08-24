@@ -1,4 +1,5 @@
-package com.gu.dynamodecs
+package com.adamnfish.dynamodecs
+
 
 sealed abstract class DynamodecError extends Exception
 

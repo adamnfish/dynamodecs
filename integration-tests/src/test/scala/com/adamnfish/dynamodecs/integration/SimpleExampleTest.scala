@@ -1,11 +1,11 @@
-package com.gu.dynamodecs.integration
+package com.adamnfish.dynamodecs.integration
 
-import com.gu.dynamodecs.attributes.AttributeCodec
-import com.gu.dynamodecs.items.ItemCodec
+import com.adamnfish.dynamodecs.attributes.AttributeCodec
+import com.adamnfish.dynamodecs.items.ItemCodec
 import org.scalatest.freespec.AnyFreeSpec
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.{GetItemRequest, PutItemRequest, ScalarAttributeType}
-import com.gu.dynamodecs.items.ItemCodec.*
+import ItemCodec.*
 import io.circe
 import io.circe.generic.semiauto.deriveCodec
 import org.scalatest.matchers.should.Matchers

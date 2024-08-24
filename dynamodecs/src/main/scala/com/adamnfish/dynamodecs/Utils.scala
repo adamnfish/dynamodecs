@@ -1,4 +1,4 @@
-package com.gu.dynamodecs
+package com.adamnfish.dynamodecs
 
 
 /**

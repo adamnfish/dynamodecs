@@ -1,4 +1,4 @@
-package com.gu.dynamodecs.integration
+package com.adamnfish.dynamodecs.integration
 
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration

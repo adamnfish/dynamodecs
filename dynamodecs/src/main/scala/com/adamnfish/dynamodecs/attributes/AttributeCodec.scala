@@ -1,7 +1,7 @@
-package com.gu.dynamodecs.attributes
+package com.adamnfish.dynamodecs.attributes
 
-import com.gu.dynamodecs.Utils.*
-import com.gu.dynamodecs.{DynamodecDecodeError, DynamodecResult}
+import com.adamnfish.dynamodecs.{DynamodecDecodeError, DynamodecResult}
+import com.adamnfish.dynamodecs.Utils.*
 import io.circe
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 

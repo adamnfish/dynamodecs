@@ -1,7 +1,7 @@
-package com.gu.dynamodecs.items
+package com.adamnfish.dynamodecs.items
 
-import com.gu.dynamodecs.DynamodecResult
-import com.gu.dynamodecs.attributes.AttributeCodec
+import com.adamnfish.dynamodecs.DynamodecResult
+import com.adamnfish.dynamodecs.attributes.AttributeCodec
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 import scala.compiletime.{constValue, erasedValue, summonInline}
@@ -9,7 +9,7 @@ import scala.deriving.Mirror
 import scala.jdk.CollectionConverters.*
 
 
-import com.gu.dynamodecs.Utils.traverseE
+import com.adamnfish.dynamodecs.Utils.traverseE
 
 
 trait ItemCodec[A]:

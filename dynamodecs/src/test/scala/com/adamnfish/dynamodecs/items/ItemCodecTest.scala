@@ -1,7 +1,6 @@
-package com.gu.dynamodecs.items
+package com.adamnfish.dynamodecs.items
 
-import com.gu.dynamodecs.attributes.{MapKeyCodec, UnwrappedAttributeCodec}
-import com.gu.dynamodecs.items.ItemCodec
+import com.adamnfish.dynamodecs.attributes.{MapKeyCodec, UnwrappedAttributeCodec}
 import io.circe.*
 import io.circe.generic.semiauto.*
 import org.scalatest.EitherValues
@@ -215,14 +214,14 @@ class ItemCodecTest extends AnyFreeSpec with Matchers with EitherValues {
 
   "syntax" - {
     "asDbItem works the same way as manually encoding" in {
-      import com.gu.dynamodecs.items.ItemCodec.asDbItem
+      import ItemCodec.asDbItem
       case class Foo(s: String, n: Int)
       val foo = Foo("hello", 42)
       foo.asDbItem shouldEqual summon[ItemCodec[Foo]].encode(foo)
     }
 
     "fromDbItem works the same way as manually decoding" in {
-      import com.gu.dynamodecs.items.ItemCodec.fromDbItem
+      import ItemCodec.fromDbItem
       case class Foo(s: String, n: Int)
       val foo = Foo("hello", 42)
       val encodedItem = summon[ItemCodec[Foo]].encode(foo)

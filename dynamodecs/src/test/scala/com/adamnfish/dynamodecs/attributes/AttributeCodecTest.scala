@@ -1,4 +1,4 @@
-package com.gu.dynamodecs.attributes
+package com.adamnfish.dynamodecs.attributes
 
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers

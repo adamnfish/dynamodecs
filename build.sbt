@@ -3,7 +3,7 @@ import scala.concurrent.duration.*
 
 ThisBuild / scalaVersion     := "3.3.1"
 ThisBuild / version          := "0.0.1-SNAPSHOT"
-ThisBuild / organization     := "com.gu"
+ThisBuild / organization     := "com.adamnfish"
 ThisBuild / organizationName := "guardian"
 
 ThisBuild / scalacOptions ++= Seq(

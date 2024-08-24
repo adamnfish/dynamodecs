@@ -1,6 +1,6 @@
-package com.gu.dynamodecs.attributes
+package com.adamnfish.dynamodecs.attributes
 
-import com.gu.dynamodecs.DynamodecResult
+import com.adamnfish.dynamodecs.DynamodecResult
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 import scala.compiletime.{constValue, erasedValue, summonInline}
