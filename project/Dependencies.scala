@@ -3,13 +3,13 @@ import sbt.*
 
 object Dependencies {
   object Versions {
-    val scalatest = "3.2.17"
+    val scalatest = "3.2.18"
 
-    val dynamoDb = "2.20.68"
+    val dynamoDb = "2.25.35"
 
-    val circe = "0.14.5"
+    val circe = "0.14.7"
 
-    val logback = "1.4.0"
+    val logback = "1.5.7"
   }
 
   val dynamoDb = "software.amazon.awssdk" % "dynamodb" % Versions.dynamoDb
