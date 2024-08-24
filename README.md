@@ -4,7 +4,8 @@ Dynamodecs
 Derive DynamoDB codecs, for Scala 3 projects.
 
 Dynamodecs makes it easy to serialize and deserialize Scala case classes to and from DynamoDB items.
-It does not attempt to replace the AWS DynamoDB SDK, but rather to provide an easy way to .
+It does not attempt to replace the AWS DynamoDB SDK, but focuses on providing an easy way to serialise
+your datastructures for storage and retrieval in DynamoDB.
 
 WIP: Not yet published
 
